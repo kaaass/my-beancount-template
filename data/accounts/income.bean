@@ -1,0 +1,20 @@
+* 收入
+
+** 工作
+1970-01-01 open Income:Job:Salary
+1970-01-01 open Income:Job:MedicalCare
+
+** 打零工
+
+** 礼物
+1970-01-01 open Income:Gift                     ; 意外所得
+1970-01-01 open Income:Gift:RedPack             ; 红包
+
+** 奖金
+1970-01-01 open Income:Award
+
+** 利息
+1970-01-01 open Income:Interest:YEB             ; 余额宝利息
+
+** 二手交易
+1970-01-01 open Income:2ndTrade

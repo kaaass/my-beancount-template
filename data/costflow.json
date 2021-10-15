@@ -1,0 +1,33 @@
+{
+  "mode": "beancount",
+  "currency": "CNY",
+  "timezone": "Asia/Shanghai",
+  "tag": "#costflow",
+  "account": {
+    "xj": "Assets:Cash",
+    "zfb": "Assets:Digital:Alipay",
+    "wx": "Assets:Digital:Wechat",
+    "yeb": "Assets:FinTech:Alipay",
+
+    "jd": "Liabilities:ConsumptionCredit:JD",
+    "hb": "Liabilities:ConsumptionCredit:Alipay",
+
+    "早饭": "Expenses:Food:Dinner:Breakfast",
+    "中饭": "Expenses:Food:Dinner:Lunch",
+    "晚饭": "Expenses:Food:Dinner:Supper",
+    "夜宵": "Expenses:Food:Extra",
+    "饮料": "Expenses:Food:Drink",
+    "零食": "Expenses:Food:Snacks",
+    "水果": "Expenses:Food:Fruit",
+    "公交": "Expenses:Transport:City",
+    "打车": "Expenses:Transport:Taxi",
+    "火车": "Expenses:Transport:Railway",
+    "飞机": "Expenses:Transport:Airplane"
+  },
+  "formula": {
+  },
+  "defaultAccount": "Assets:Digital:Alipay",
+  "alphavantage": null,
+  "indent": 2,
+  "lineLength": 50
+}

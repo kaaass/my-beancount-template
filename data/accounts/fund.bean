@@ -1,0 +1,9 @@
+* 基金
+
+** 场外基金
+
+1970-01-01 open Assets:Trade:Fund:F161725 F161725 "FIFO"
+1970-01-01 open Income:Trade:Fund:F161725:PnL
+1970-01-01 open Income:Trade:Fund:F161725:Exchange
+
+** 场内基金

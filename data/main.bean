@@ -1,0 +1,26 @@
+option "operating_currency" "CNY"
+
+1970-01-01 commodity CNY
+
+* 插件
+plugin "beancount.plugins.tag_pending"
+plugin "beancount.plugins.unrealized" "Unrealized"
+
+* Fava
+1970-01-01 custom "fava-option" "journal-show-transaction" "pending cleared other"
+
+* 货币
+include "commodities.bean"
+
+* 账户
+include "accounts/assets.bean"
+include "accounts/expenses.bean"
+include "accounts/liabilities.bean"
+include "accounts/income.bean"
+include "accounts/equity.bean"
+include "accounts/fund.bean"
+
+* 交易
+include "txs/index.bean"
+include "tgbot/index.bean"
+include "automatic/index.bean"

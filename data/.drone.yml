@@ -1,0 +1,39 @@
+kind: pipeline
+type: docker
+name: default
+steps:
+  - name: overwrite-remote
+    image: alpine:3.13
+    commands:
+      # 检查是否有未提交更新
+      - sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+      - apk add git
+      - |
+        if git -C /deployment diff-index --quiet HEAD; then
+          echo "无未提交更新，可以覆盖"
+        else
+          echo "有未提交更改，请先 /task backup 后合入 master！"
+          exit 1
+        fi
+      # 备份
+      - cp /deployment/bot.session /tmp
+      # 删除老文件
+      - rm -rf /deployment/*
+      # 删除敏感文件
+      - rm -f .drone.yml
+      - rm -rf .git
+      # 部署文件
+      - cp -r ./ /deployment
+      - cp /tmp/bot.session /deployment
+    volumes:
+      - name: deployment
+        path: /deployment
+    when:
+      branch:
+        - master
+
+# 宿主机缓存位置
+volumes:
+  - name: deployment
+    host:
+      path:

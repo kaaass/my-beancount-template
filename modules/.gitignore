@@ -1,0 +1,12 @@
+node_modules
+env
+__pycache__
+*.pyc
+.DS_Store
+Thumbs.db
+.bak
+out.bean
+work/*
+.idea
+main.bean
+venv

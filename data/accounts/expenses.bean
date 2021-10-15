@@ -1,0 +1,60 @@
+* 支出
+
+** 食物
+1970-01-01 open Expenses:Food                   ; 食物相关
+1970-01-01 open Expenses:Food:Dinner            ; 正餐
+1970-01-01 open Expenses:Food:Dinner:Breakfast  ; 早餐
+1970-01-01 open Expenses:Food:Dinner:Lunch      ; 中餐
+1970-01-01 open Expenses:Food:Dinner:Supper     ; 晚餐
+1970-01-01 open Expenses:Food:Extra             ; 加餐、夜宵
+1970-01-01 open Expenses:Food:Drink             ; 奶茶、咖啡
+1970-01-01 open Expenses:Food:Snacks            ; 零食
+1970-01-01 open Expenses:Food:Fruit             ; 水果
+
+** 交通出行
+1970-01-01 open Expenses:Transport:City       ; 城市公共交通
+1970-01-01 open Expenses:Transport:Taxi       ; 打车
+1970-01-01 open Expenses:Transport:Railway    ; 火车
+1970-01-01 open Expenses:Transport:Airplane   ; 飞机
+
+** 衣物
+1970-01-01 open Expenses:Clothes
+
+** ACG
+
+*** ACG 游戏
+
+** 买书
+1970-01-01 open Expenses:Book
+
+** 技术开销
+1970-01-01 open Expenses:Tech
+
+** 电子消费品及其配件
+1970-01-01 open Expenses:Electronic
+
+** 娱乐活动
+1970-01-01 open Expenses:Entertainment:Movie  ; 电影
+1970-01-01 open Expenses:Entertainment:Live   ; 演唱会
+
+** 健康
+1970-01-01 open Expenses:Health
+
+** 生活开销
+1970-01-01 open Expenses:Life
+1970-01-01 open Expenses:Life:Consumables     ; 日用品
+1970-01-01 open Expenses:Life:Haircut         ; 理发
+
+** 社交活动
+1970-01-01 open Expenses:Social:Gift          ; 礼物
+
+** 各类服务费用
+1970-01-01 open Expenses:Fee
+1970-01-01 open Expenses:Fee:Mobile          ; 话费
+1970-01-01 open Expenses:Fee:Delivery        ; 邮费
+
+** 税费
+1970-01-01 open Expenses:Tax
+
+** 其他
+1970-01-01 open Expenses:Unknown

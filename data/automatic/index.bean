@@ -1,0 +1,12 @@
+* 电子账户
+
+** 支付宝
+include "alipay/*.bean"
+
+** 微信
+include "wechat/*.bean"
+
+* 银行账单
+
+* 自动抓取价格信息
+include "prices.bean"

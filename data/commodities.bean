@@ -1,0 +1,9 @@
+* 货币
+2021-01-01 commodity USD
+  export: "USD"
+  price: "CNY:modules.price_sources.boc/_E7_BE_8E_E5_85_83"
+
+* 基金
+2021-01-01 commodity F161725
+  export: "F161725"
+  price: "CNY:modules.price_sources.10jqka/161725"

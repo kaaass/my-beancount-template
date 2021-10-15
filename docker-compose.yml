@@ -1,0 +1,27 @@
+version: '3'
+services:
+  fava:
+    image: kaaass/fava-management
+    container_name: 'fava'
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      - BEANCOUNT_FILE=/bean/main.bean
+      - USERNAME=admin
+      - PASSWORD=123456
+    volumes:
+      - ./data:/bean
+
+  beancount_bot:
+    image: kaaass/my_beancount_bot_docker
+    container_name: 'beancount_bot'
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - PYTHONPATH=/modules
+    volumes:
+      - ./data:/bean
+      - ./data:/config
+      - ./modules:/modules
+      - ./init.d:/init.d

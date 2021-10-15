@@ -1,0 +1,57 @@
+log:
+  # 日志等级
+  level: 'INFO'
+
+bot:
+  # 代理
+  proxy: ''
+
+  # Telegram 机器人 Token
+  token: ''
+
+  # 鉴权用令牌。第一次进入机器人时用于校验身份
+  auth_token: '123456'
+
+  # 机器人会话文件路径
+  session_file: '/config/bot.session'
+
+transaction:
+  # 账本文件。可以使用：{year}、{month}、{date}
+  beancount_file: '/bean/tgbot/{year}/{month}.bean'
+
+  # 消息处理器
+  message_dispatcher:
+    # 模板
+    - class: 'beancount_bot.builtin.TemplateDispatcher'
+      args:
+        template_config: '/config/template.yml'
+    # Costflow
+    - class: 'beancount_bot_costflow.CostflowDispatcher'
+      args:
+        costflow_config: '/config/costflow.json'
+
+schedule:
+  # 定时任务定义
+  # name：定时任务名，可以用 /task name 主动触发
+  # class：定时任务类
+  # args：创建任务需要的参数
+
+  # 定时任务示例：定时更新价格
+  # 使用内建任务类：beancount_bot.builtin.DailyCommandTask
+  # 该类在每日 time 时执行指令，之后广播 message 消息
+  - name: price
+    class: 'beancount_bot.builtin.DailyCommandTask'
+    args:
+      time: '21:30'
+      message: '当日价格更新完成'
+      commands:
+        - 'bean-price /bean/main.bean >> /bean/automatic/prices.bean'
+
+  # 定时备份
+  - name: backup
+    class: 'beancount_bot.builtin.DailyCommandTask'
+    args:
+      time: '23:30'
+      message: '备份完成'
+      commands:
+        - 'sh /modules/git_backup.sh'

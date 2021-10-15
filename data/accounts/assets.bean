@@ -1,0 +1,25 @@
+* 资产
+
+** 现金
+1970-01-01 open Assets:Cash                   ; 现金
+
+** 数字钱包
+1970-01-01 open Assets:Digital:Alipay         ; 支付宝余额
+1970-01-01 open Assets:Digital:Wechat         ; 微信零钱
+
+** 储蓄卡
+1970-01-01 open Assets:DebitCard:BOC          ; 中国银行
+
+** 数字理财产品
+1970-01-01 open Assets:FinTech:Alipay         ; 支付宝余额宝
+1970-01-01 open Assets:FinTech:Wechat         ; 微信零钱通
+
+** 有形资产
+1970-01-01 open Assets:Tangibles:ACG:Switch   ; Switch 卡带
+
+** 代付记账
+1970-01-01 open Assets:Receivables:A
+1970-01-01 open Assets:Receivables:B
+
+** 交易所账户
+1970-01-01 open Assets:Trade:DFCF             ; 东方财富
