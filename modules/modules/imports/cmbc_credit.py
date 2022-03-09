@@ -2,7 +2,9 @@ from datetime import date
 
 import eml_parser
 from beancount.core import data
-from beancount.core.data import Transaction
+from beancount.core.amount import Amount
+from beancount.core.data import Transaction, Posting
+from beancount.core.number import D
 from bs4 import BeautifulSoup
 
 from . import (get_account_by_guess)
@@ -43,16 +45,38 @@ class CMBCCredit():
             year -= 1
         return date(year, int(splitted_date[0]), int(splitted_date[1]))
 
+    def get_currencies_indexes(self, tables):
+        ret = []
+        # 筛选出币种
+        for idx, el in zip(range(len(tables)), tables):
+            if el.find('font', text='本期最低还款额\xa0Min.Payment\xa0:') is not None:
+                ret.append(idx)
+        # 去除空表
+        for i in range(len(ret)):
+            if i == len(ret) - 1:
+                if ret[i] + 4 < len(tables):
+                    ret[i] = None
+            else:
+                if ret[i + 1] - ret[i] < 4:
+                    ret[i] = None
+        return [x for x in ret if x is not None]
+
     def parse(self):
         d = self.soup
         tables = d.select('#loopBand2>table>tr')
-        currencies_count = int(len(tables) / 4)
         transactions = []
-        for x in range(0, currencies_count):
-            title = tables[x * 4]
-            contents = tables[x * 4 + 3]
+        for x in self.get_currencies_indexes(tables):
+            title = tables[x]
+            contents = tables[x + 3]
             currency = title.select('#fixBand29 td>table td')[1].text.strip()
             currency = self.get_currency(currency)
+            # 增加汇率输入，以便自动设置
+            unit_price = 1
+            if currency != 'CNY':
+                input_price = input(f'正在导入外币 {currency}，如果已经购汇请输入汇率（RMB），否则请留空：')
+                if input_price:
+                    unit_price = D(input_price)
+            # 遍历交易
             bands = contents.select('#loopBand3>table>tr')
             for band in bands:
                 tds = band.select(
@@ -72,7 +96,7 @@ class CMBCCredit():
                 print("Importing {}/{} at {}".format(payee, description, time))
                 account = get_account_by_guess(payee, description, time)
                 flag = "*"
-                amount = float(price.replace(',', ''))
+                amount = D(price.replace(',', ''))
                 if "Unknown" in account:
                     flag = "!"
                 meta = {}
@@ -90,8 +114,14 @@ class CMBCCredit():
                     data.EMPTY_SET,
                     data.EMPTY_SET, []
                 )
-                data.create_simple_posting(entry, account, price, currency)
-                data.create_simple_posting(entry, Account民生, None, None)
+                # 卡账户
+                units = Amount(-amount, currency)
+                price = None
+                if unit_price != 1:
+                    price = Amount(unit_price, 'CNY')
+                entry.postings.append(Posting(Account民生, units, None, price, None, None))
+                # 对方账户
+                data.create_simple_posting(entry, account, None, None)
                 if not self.deduplicate.find_duplicate(entry, -amount, None, Account民生):
                     transactions.append(entry)
 

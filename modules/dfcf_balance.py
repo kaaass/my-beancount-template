@@ -1,7 +1,7 @@
 import datetime
 
 if __name__ == '__main__':
-    print("请输入导出的天天基金持仓（Table Capture）：")
+    print("请输入导出的东方财富持仓（Table Capture）：")
     lines = []
     cur = None
     while True:
@@ -18,9 +18,9 @@ if __name__ == '__main__':
         date = datetime.date.today().isoformat()
         fund_code = row[0]
         fund_name = row[1]
-        amount = row[5]
+        amount = row[2]
         print("导入：", fund_code, fund_name, amount)
-        result.append(f'{date} balance Assets:Trade:Fund:F{fund_code} {amount} F{fund_code} ; {fund_name}')
+        result.append(f'{date} balance Assets:Trade:ETFund:S{fund_code} {amount} S{fund_code} ; {fund_name}')
 
     with open('out.bean', 'w') as f:
         f.write('\n'.join(result))

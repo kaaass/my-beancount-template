@@ -5,6 +5,7 @@ from beancount.parser import printer
 
 from modules.imports.alipay import Alipay
 from modules.imports.alipay_prove import AlipayProve
+from modules.imports.bcm_debit import BCMDebit
 from modules.imports.citic_credit import CITICCredit
 from modules.imports.cmb_credit import CMBCredit
 from modules.imports.cmbc_credit import CMBCCredit
@@ -25,7 +26,7 @@ args = parser.parse_args()
 entries, errors, option_map = loader.load_file(args.entry)
 
 importers = [Alipay, AlipayProve, WeChat, Dfcf, Ttjj, CITICCredit, CMBCCredit,
-             CMBCredit, YuEBao, ICBCCredit, ICBCDebit]
+             CMBCredit, YuEBao, ICBCCredit, ICBCDebit, BCMDebit]
 instance = None
 for importer in importers:
     try:

@@ -20,9 +20,9 @@ class Deduplicate:
         bql = "SELECT flag, filename, lineno, location, account, year, month, day," \
               " str(entry_meta('timestamp')) as timestamp, metas() as metas " \
               "WHERE year = {} AND month = {} AND day = {} AND " \
-              "      (number(convert(units(position), '{}')) = {} or number(convert(units(position), '{}')) = -{})" \
+              "      (number(convert(units(position), '{}')) = {} or number(convert(units(position), '{}')) = {})" \
               "ORDER BY timestamp ASC".format(entry.date.year, entry.date.month, entry.date.day, currency, money,
-                                              currency, money)
+                                              currency, str(eval(f'-{money}')))
         items = query.run_query(self.entries, self.option_map, bql)
         length = len(items[1])
         if length == 0:

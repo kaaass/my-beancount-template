@@ -28,7 +28,10 @@ class Dfcf(Base):
     def __init__(self, filename, byte_content, entries, option_map):
         if 'DFCF' not in filename:
             raise ValueError("不是东方财富数据")
-        self.content = byte_content.decode('gbk')
+        try:
+            self.content = byte_content.decode('gbk')
+        except Exception:
+            self.content = byte_content.decode('utf-8')
         self.deduplicate = Deduplicate(entries, option_map)
 
     def parse(self):
@@ -84,8 +87,16 @@ class Dfcf(Base):
                 # 证券卖出
                 units = Amount(D(f'-{amount}'), stock_unit)
                 cost = Cost(None, None, None, None)
-                entry.postings.append(Posting(stock_account, units, cost, None, None, None))
-                data.create_simple_posting(entry, accounts['东方财富'], row['成交金额'], 'CNY')
+                price = Amount(D(cny_price), 'CNY')
+                entry.postings.append(Posting(stock_account, units, cost, price, None, None))
+                # 计算账户金额
+                account_price = D(row['成交金额']).quantize(D('0.01'))
+                # 减去手续费
+                reduce_cols = ['佣金', '印花税', '过户费', '交易规费']
+                for col in reduce_cols:
+                    account_price -= D(row[col]).quantize(D('0.01'))
+                # 结果
+                data.create_simple_posting(entry, accounts['东方财富'], account_price, 'CNY')
                 data.create_simple_posting(entry, stock_pnl, None, None)
             else:
                 print("未知！", row)
@@ -94,16 +105,16 @@ class Dfcf(Base):
             # 服务费相关计算
             if row['佣金'] != '0':
                 data.create_simple_posting(
-                    entry, stock_exchange, row['佣金'], 'CNY')
+                    entry, stock_exchange, D(row['佣金']).quantize(D('0.01')), 'CNY')
             if row['交易规费'] != '0':
                 data.create_simple_posting(
-                    entry, stock_exchange, row['交易规费'], 'CNY')
+                    entry, stock_exchange, D(row['交易规费']).quantize(D('0.01')), 'CNY')
             if row['印花税'] != '0':
                 data.create_simple_posting(
-                    entry, stock_exchange, row['印花税'], 'CNY')
+                    entry, stock_exchange, D(row['印花税']).quantize(D('0.01')), 'CNY')
             if row['过户费'] != '0':
                 data.create_simple_posting(
-                    entry, stock_exchange, row['过户费'], 'CNY')
+                    entry, stock_exchange, D(row['过户费']).quantize(D('0.01')), 'CNY')
 
             b = printer.format_entry(entry)
             print(b)

@@ -28,7 +28,10 @@ class Ttjj(Base):
     def __init__(self, filename, byte_content, entries, option_map):
         if 'TTJJ' not in filename:
             raise ValueError("不是天天基金数据")
-        self.content = byte_content.decode('gbk')
+        try:
+            self.content = byte_content.decode('gbk')
+        except Exception:
+            self.content = byte_content.decode('utf-8')
         self.deduplicate = Deduplicate(entries, option_map)
 
     def parse(self):
@@ -73,13 +76,16 @@ class Ttjj(Base):
             stock_exchange = STOCK_EXCHANGE.format(stock_code)
             account = accounts[row['关联银行卡']]
 
-            if trade_type == '买基金':
+            if trade_type == '买基金' or trade_type == '定时定额投资':
                 # 证券买入
                 data.create_simple_posting(entry, account, f"-{row['确认金额']}", 'CNY')
                 units = Amount(D(amount), stock_unit)
                 cost = Cost(D(row['确认净值']), 'CNY', None, None)
                 entry.postings.append(Posting(stock_account, units, cost, None, None, None))
                 data.create_simple_posting(entry, 'Equity:Round-Off', None, None)
+                # 定投
+                if trade_type == '定时定额投资':
+                    entry = entry._replace(tags=entry.tags.union({'Auto-Invest-TTJJ'}))
             elif trade_type == '卖基金':
                 # 证券卖出
                 units = Amount(D(f'-{amount}'), stock_unit)
