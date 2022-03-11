@@ -4,6 +4,7 @@ option "operating_currency" "CNY"
 
 * 插件
 plugin "beancount.plugins.tag_pending"
+plugin "modules.plugins.sort_by_timestamp"
 plugin "beancount.plugins.unrealized" "Unrealized"
 
 * Fava
