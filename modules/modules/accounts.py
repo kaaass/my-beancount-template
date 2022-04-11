@@ -53,10 +53,16 @@ anothers = {
     '饿了么': get_eating_account,
 }
 
+# 匹配收入描述
 incomes = {
     '余额宝.*收益发放': 'Income:Interest:YEB',
+}
+
+# 匹配收入账户
+income_account = {
 }
 
 description_res = dict([(key, re.compile(key)) for key in descriptions])
 another_res = dict([(key, re.compile(key)) for key in anothers])
 income_res = dict([(key, re.compile(key)) for key in incomes])
+income_account_res = dict([(key, re.compile(key)) for key in income_account])

@@ -16,21 +16,28 @@ def get_account_by_guess(from_user, description, time=None):
                     return value(from_user, description, time)
                 else:
                     return value
-                break
     for key, value in anothers.items():
         if another_res[key].findall(from_user):
             if callable(value):
                 return value(from_user, description, time)
             else:
                 return value
-            break
     return "Expenses:Unknown"
 
 
 def get_income_account_by_guess(from_user, description, time=None):
     for key, value in incomes.items():
         if income_res[key].findall(description):
-            return value
+            if callable(value):
+                return value(from_user, description, time)
+            else:
+                return value
+    for key, value in income_account.items():
+        if income_account_res[key].findall(from_user):
+            if callable(value):
+                return value(from_user, description, time)
+            else:
+                return value
     return "Income:Unknown"
 
 
