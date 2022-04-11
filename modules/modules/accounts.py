@@ -34,7 +34,9 @@ accounts = {
     '花呗': 'Liabilities:ConsumptionCredit:Alipay',
     '白条': 'Liabilities:ConsumptionCredit:JD',
     '零钱': 'Assets:Digital:Wechat',
-    '支付宝余额': 'Assets:Digital:Alipay'，
+    '支付宝余额': 'Assets:Digital:Alipay',
+    '东方财富': 'Assets:Trade:DFCF',
+    '东方财富利息': 'Income:Interest:DFCF',
 }
 
 # 匹配账单备注

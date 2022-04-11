@@ -41,11 +41,11 @@ class Dfcf(Base):
         transactions = []
         for row in reader:
             # 解析信息
-            time = f"{row['成交日期']} {row['成交时间']}"
-            trade_no = row['成交编号']
+            time = f"{row['发生日期']} {row['发生时间']}"
+            trade_no = row['发生日期'] + row['发生时间'] + row['证券代码'] + row['成交数量']
             stock_code = row['证券代码']
             stock_name = row['证券名称']
-            trade_type = row['委托方向']
+            trade_type = row['买卖类别']
             amount = row['成交数量']
             cny_price = row['成交价格']
             print("导入 {}： {} {} {}".format(time, trade_no, stock_name, trade_type))
@@ -98,6 +98,18 @@ class Dfcf(Base):
                 # 结果
                 data.create_simple_posting(entry, accounts['东方财富'], account_price, 'CNY')
                 data.create_simple_posting(entry, stock_pnl, None, None)
+            elif trade_type == '利息归本':
+                # 利息归本
+                entry = entry._replace(payee='东方财富')._replace(narration=trade_type)
+                price = -D(row['发生金额']).quantize(D('0.01'))
+                data.create_simple_posting(entry, accounts['东方财富利息'], price, 'CNY')
+                data.create_simple_posting(entry, accounts['东方财富'], None, None)
+            elif trade_type == '银行转证券':
+                # 银行转证券
+                entry = entry._replace(payee='东方财富')._replace(narration=trade_type)
+                price = D(row['发生金额']).quantize(D('0.01'))
+                data.create_simple_posting(entry, accounts['东方财富'], price, 'CNY')
+                data.create_simple_posting(entry, 'Assets:Unknown', None, None)  # 缺信息，等待银行账单导入
             else:
                 print("未知！", row)
                 exit(1)

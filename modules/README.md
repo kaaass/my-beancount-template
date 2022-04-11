@@ -13,7 +13,7 @@
 
 ### 东方财富
 
-匹配 `DFCF` 开头的 CSV 文件。文件内容是 Table Capture 捕获的[历史交易](https://jy.xzsec.com/Search/HisDeal)。
+匹配 `DFCF` 开头的 CSV 文件。文件内容是 Table Capture 捕获的[交割单](https://jy.xzsec.com/Search/FundsFlow)。
 
 导入器要求按照特定规则开户，请参考相关博客。
 
