@@ -10,6 +10,7 @@ services:
       - BEANCOUNT_FILE=/bean/main.bean
       - USERNAME=admin
       - PASSWORD=123456
+      - "PYTHONPATH=/app:/modules"
     volumes:
       - ./data:/bean
 
