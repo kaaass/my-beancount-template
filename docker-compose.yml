@@ -13,6 +13,7 @@ services:
       - "PYTHONPATH=/app:/modules"
     volumes:
       - ./data:/bean
+      - ./modules:/modules
 
   beancount_bot:
     image: kaaass/my_beancount_bot_docker
