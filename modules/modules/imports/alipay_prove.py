@@ -13,6 +13,7 @@ from . import (DictReaderStrip, get_account_by_guess,
                get_income_account_by_guess)
 from .base import Base
 from .deduplicate import Deduplicate
+from .private_rules import alipay_rules
 from ..accounts import accounts
 
 AccountAssetUnknown = 'Assets:Unknown'
@@ -29,7 +30,7 @@ def lineno():
 class AlipayProve(Base):
 
     def __init__(self, filename, byte_content, entries, option_map):
-        if re.search(r'alipay_record_\d{8}_\d{6}.zip$', filename):
+        if re.search(r'alipay_record_\d{8}_\d{6}.*.zip$', filename):
             password = input('支付宝账单密码：')
             z = AESZipFile(BytesIO(byte_content), 'r')
             z.setpassword(bytes(password.strip(), 'utf-8'))
@@ -41,12 +42,13 @@ class AlipayProve(Base):
                 byte_content = f.read()
         content = byte_content.decode("gbk")
         lines = content.split("\n")
-        if not re.search(r'支付宝（中国）网络技术有限公司', lines[0]):
+        FEATURE_LINE = '------------------------支付宝（中国）网络技术有限公司  电子客户回单------------------------\r'
+        if FEATURE_LINE not in lines:
             raise ValueError('Not Alipay Proven Record!')
 
         print('Import Alipay', filename)
-        end_line = lines.index('-' * 84 + '\r')
-        content = "\n".join(lines[1:end_line])
+        start_line = lines.index(FEATURE_LINE) + 1
+        content = "\n".join(lines[start_line:])
         self.content = content
         self.deduplicate = Deduplicate(entries, option_map)
 
@@ -90,6 +92,10 @@ class AlipayProve(Base):
             trade_account_original = row['收/付款方式']
             if trade_account_original == '余额' or trade_account_original == '余额&支付宝随机立减':
                 trade_account_original = '支付宝余额'
+            if trade_account_original == '账户余额':
+                trade_account_original = '支付宝余额'
+            # 去除支付宝随机立减，避免账户匹配失败
+            trade_account_original = trade_account_original.replace('&支付宝随机立减', '')
             trade_account = accounts[
                 trade_account_original] if trade_account_original in accounts else AccountAssetUnknown
 
@@ -100,16 +106,18 @@ class AlipayProve(Base):
             # 类型判断
             if trade_type == '支出':
                 # 正常交易
-                if status in ['交易成功', '支付成功', '代付成功', '亲情卡付款成功', '等待确认收货', '等待对方发货', '交易关闭']:
+                if status in ['交易成功', '支付成功', '代付成功', '亲情卡付款成功', '等待确认收货', '等待对方发货', '交易关闭',
+                              '充值成功']:
                     data.create_simple_posting(
                         entry, trade_account, '-' + amount_string, 'CNY')
                     data.create_simple_posting(
                         entry, dest_account, None, None)
                 else:
-                    print(status)
+                    print(f"遇到未知支出交易状态：{status}")
                     exit(0)
-            elif trade_type == '其他':
+            elif trade_type == '其他' or trade_type == '不计收支':
                 if (status == '退款成功' or
+                    status == '赔付成功' or
                     ('蚂蚁财富' in row['交易对方'] and status == '交易成功') or
                     ('红包' == trade_account_original and status == '交易成功') or
                     ('基金组合' in row['商品说明'] and status == '交易成功') or
@@ -130,11 +138,18 @@ class AlipayProve(Base):
                     data.create_simple_posting(
                         entry, dest_account, None, None)
                 elif (trade_account_original == '支付宝余额') and status == '交易成功':
-                    # 余额支付
-                    data.create_simple_posting(
-                        entry, Account余额, '-' + amount_string, 'CNY')
-                    data.create_simple_posting(
-                        entry, dest_account, None, None)
+                    if row['商品说明'] == '充值-普通充值':
+                        # 充值余额
+                        data.create_simple_posting(
+                            entry, Account余额, amount_string, 'CNY')
+                        data.create_simple_posting(
+                            entry, AccountAssetUnknown, None, None) # 没有详细的卡信息
+                    else:
+                        # 余额支付
+                        data.create_simple_posting(
+                            entry, Account余额, '-' + amount_string, 'CNY')
+                        data.create_simple_posting(
+                            entry, dest_account, None, None)
                 elif '余额宝-转出到余额' in row['商品说明'] and status == '交易成功':
                     data.create_simple_posting(
                         entry, Account余额宝, '-' + amount_string, 'CNY')
@@ -149,16 +164,19 @@ class AlipayProve(Base):
                         entry, dest_account, amount_string, 'CNY')
                     data.create_simple_posting(
                         entry, trade_account, None, None)
-                elif ('转账到银行卡-转账' in row['商品说明'] or '提现-快速提现' in row['商品说明']) and status == '交易成功':
+                elif (row['商品说明'] in ['转账到银行卡-转账', '提现-快速提现', '提现-实时提现']) and status == '交易成功':
                     # 银行卡转账没有详细的卡信息
                     data.create_simple_posting(
                         entry, trade_account, '-' + amount_string, 'CNY')
                     data.create_simple_posting(
                         entry, AccountAssetUnknown, None, None)
+                    if trade_account_original == '支付宝余额':
+                        print("【注意】发生余额提现！可能存在账单中未记录的手续费（通常为 0.10）！")
                 elif status in ['交易关闭', '失败'] and trade_account_original == '':
                     # 忽略交易关闭
                     continue
                 else:
+                    print("遇到未知其他交易")
                     pprint(row)
                     print(f"at {lineno()}")
                     exit(0)
@@ -192,6 +210,9 @@ class AlipayProve(Base):
                 # Switch 卡带二手，记待查项
                 if 'Expenses:ACG:Game:Switch:Cartridge' in posting.account:
                     entry = entry._replace(flag='!')
+
+            # 运行特殊规则
+            entry = alipay_rules(entry)
 
             if not self.deduplicate.find_duplicate(entry, amount, 'alipay_trade_no'):
                 transactions.append(entry)

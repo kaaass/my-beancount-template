@@ -29,6 +29,8 @@ produce a listing of them.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import ast
+
 from beancount.core import inventory
 from beancount.ops import basicops
 
@@ -46,6 +48,8 @@ def tag_pending_transactions(entries, tag_name='PENDING', zero_sum_accounts=None
       entries: A list of directives/transactions to process.
       tag_name: A string, the name of the tag to be inserted if a linked group
         of entries is found not to match
+      zero_sum_accounts: A dict of prefix to accounts, if a link starts with
+        the prefix, only consider the accounts in the dict.
     Returns:
       A modified set of entries, possibly tagged as pending.
 
@@ -67,7 +71,12 @@ def tag_pending_transactions(entries, tag_name='PENDING', zero_sum_accounts=None
             # 如果设置了 zero-sum 账户，则只考虑 zero-sum 账户
             for prefix, accounts in zero_sum_accounts.items():
                 if link.startswith(prefix):
-                    common_accounts = set(accounts)
+                    # 通过账户前缀过滤公共账户
+                    common_accounts = {
+                        account
+                        for account in common_accounts
+                        if any(account.startswith(a) for a in accounts)
+                    }
                     break
 
             # Compute the sum total balance of the common accounts.
@@ -83,25 +92,29 @@ def tag_pending_transactions(entries, tag_name='PENDING', zero_sum_accounts=None
                     pending_entry_ids.add(id(entry))
 
     # Insert tags if marked.
-    return [(entry._replace(tags=(entry.tags or set()) | set((tag_name,)))
+    # noinspection PyProtectedMember
+    return [(entry._replace(tags=(entry.tags or set()) | {tag_name})
              if id(entry) in pending_entry_ids
              else entry)
             for entry in entries]
 
 
-def tag_pending_plugin(entries, options_map):
+def tag_pending_plugin(entries, options_map, config=None):
     """A plugin that finds and tags pending transactions.
 
     Args:
       entries: A list of entry instances.
       options_map: A dict of options parsed from the file.
+      config: A string of configuration options.
     Returns:
       A tuple of entries and errors.
     """
-    # 解析特殊规则：指定 zero-sum 账户
-    zero_sum_accounts = {
-        'Switch': ['Assets:Tangibles:ACG:Switch'],
-        'Figure': ['Equity:Pending:Figure', 'Liabilities:FinalPayment:Figure'],
-    }
 
-    return (tag_pending_transactions(entries, 'PENDING', zero_sum_accounts), [])
+    # 解析特殊规则：指定 zero-sum 账户
+    try:
+        zero_sum_accounts = ast.literal_eval(config)
+        assert isinstance(zero_sum_accounts, dict)
+    except (ValueError, AssertionError):
+        zero_sum_accounts = {}
+
+    return tag_pending_transactions(entries, 'PENDING', zero_sum_accounts), []

@@ -19,6 +19,21 @@ STOCK_UNIT = 'S{}'
 STOCK_PNL = 'Income:Trade:ETFund:S{}:PnL'
 STOCK_EXCHANGE = 'Income:Trade:ETFund:S{}:Exchange'
 
+CONFIGS = {
+    'stock': {
+        'account': 'Assets:Trade:Stock:A{}',
+        'unit': 'A{}',
+        'pnl': 'Income:Trade:Stock:A{}:PnL',
+        'exchange': 'Income:Trade:Stock:A{}:Exchange',
+    },
+    'et_fund': {
+        'account': 'Assets:Trade:ETFund:S{}',
+        'unit': 'S{}',
+        'pnl': 'Income:Trade:ETFund:S{}:PnL',
+        'exchange': 'Income:Trade:ETFund:S{}:Exchange',
+    },
+}
+
 
 class Dfcf(Base):
     """
@@ -72,10 +87,14 @@ class Dfcf(Base):
             )
 
             # 证券账目
-            stock_account = STOCK_ACCOUNT.format(stock_code)
-            stock_unit = STOCK_UNIT.format(stock_code)
-            stock_pnl = STOCK_PNL.format(stock_code)
-            stock_exchange = STOCK_EXCHANGE.format(stock_code)
+            if is_cn_stock(stock_code):
+                entry_type = 'stock'
+            else:
+                entry_type = 'et_fund'
+            stock_account = CONFIGS[entry_type]['account'].format(stock_code)
+            stock_unit = CONFIGS[entry_type]['unit'].format(stock_code)
+            stock_pnl = CONFIGS[entry_type]['pnl'].format(stock_code)
+            stock_exchange = CONFIGS[entry_type]['exchange'].format(stock_code)
 
             if trade_type == '证券买入':
                 # 证券买入
@@ -104,7 +123,7 @@ class Dfcf(Base):
                 price = -D(row['发生金额']).quantize(D('0.01'))
                 data.create_simple_posting(entry, accounts['东方财富利息'], price, 'CNY')
                 data.create_simple_posting(entry, accounts['东方财富'], None, None)
-            elif trade_type == '银行转证券':
+            elif trade_type == '银行转证券' or trade_type == '证券转银行':
                 # 银行转证券
                 entry = entry._replace(payee='东方财富')._replace(narration=trade_type)
                 price = D(row['发生金额']).quantize(D('0.01'))
@@ -135,3 +154,22 @@ class Dfcf(Base):
 
         self.deduplicate.apply_beans()
         return transactions
+
+
+STOCK_PREFIX = [
+    # 上交所
+    '600', '601', '603', '605',
+    # 深交所
+    '000', '002', '003', '300', '301',
+    # 北交所
+    '43', '83', '87', '88',
+]
+
+
+def is_cn_stock(code):
+    if len(code) != 6:
+        return False
+    for prefix in STOCK_PREFIX:
+        if code.startswith(prefix):
+            return True
+    return False

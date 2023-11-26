@@ -48,9 +48,9 @@ class Deduplicate:
             # 另外因为支付宝的傻逼账单，这里还需要承担支付手段更新的功能
             if (
                 ('timestamp' not in entry.meta) or
-                item_timestamp == entry.meta['timestamp'] or
                 item.timestamp == 'None' or
-                item.timestamp == ''
+                item.timestamp == '' or
+                abs(int(item_timestamp) - int(entry.meta['timestamp'])) < 10 * 60 # 10 分钟内发生
             ):
                 tx: Transaction = self.get_tx_of_position(item.filename, item.lineno)
                 new_tx: Transaction = copy.deepcopy(tx)
@@ -78,8 +78,6 @@ class Deduplicate:
                 if new_tx.payee is None or len(new_tx.payee) == 0:
                     new_tx = new_tx._replace(payee=entry.payee)
                     print("Update payee {} to {}".format(tx.payee, new_tx.payee))
-                # 标记待检查
-                new_tx = new_tx._replace(flag='!')
                 # 更改
                 self.modify_transaction(tx, new_tx)
                 updated_items.append(new_tx)

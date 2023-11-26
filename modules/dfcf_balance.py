@@ -1,5 +1,7 @@
 import datetime
 
+from modules.imports.dfcf import is_cn_stock
+
 if __name__ == '__main__':
     print("请输入导出的东方财富持仓（Table Capture）：")
     lines = []
@@ -13,6 +15,7 @@ if __name__ == '__main__':
     lines = lines[1:-1]
 
     result = []
+    stock_result = []
     for line in lines:
         row = line.split('\t')
         date = datetime.date.today().isoformat()
@@ -20,7 +23,12 @@ if __name__ == '__main__':
         fund_name = row[1]
         amount = row[2]
         print("导入：", fund_code, fund_name, amount)
-        result.append(f'{date} balance Assets:Trade:ETFund:S{fund_code} {amount} S{fund_code} ; {fund_name}')
+        if is_cn_stock(fund_code):
+            stock_result.append(f'{date} balance Assets:Trade:Stock:A{fund_code} {amount} A{fund_code} ; {fund_name}')
+        else:
+            result.append(f'{date} balance Assets:Trade:ETFund:S{fund_code} {amount} S{fund_code} ; {fund_name}')
 
     with open('out.bean', 'w') as f:
         f.write('\n'.join(result))
+        f.write('\n\n')
+        f.write('\n'.join(stock_result))

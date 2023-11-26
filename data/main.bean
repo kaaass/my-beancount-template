@@ -3,9 +3,23 @@ option "operating_currency" "CNY"
 1970-01-01 commodity CNY
 
 * 插件
-plugin "beancount.plugins.tag_pending"
+plugin "modules.plugins.tag_pending" "{
+    'Switch': ['Assets:Tangibles:ACG:Switch'],
+    'Deposit': ['Assets:Receivables:Deposit'],  # 代付时只考虑资产账户余额变动是否为 0
+}"
 plugin "modules.plugins.sort_by_timestamp"
-plugin "beancount.plugins.unrealized" "Unrealized"
+plugin "modules.plugins.switch_depreciation" "[
+  {
+    'link_prefix': 'Switch',
+    'assets': 'Assets:Tangibles:ACG:Switch',
+    'expense': 'Expenses:ACG:Game:Switch:Cartridge',
+    'depreciation_ratio': \"D('0.0456') * m ** D('-0.544')\",
+    'depreciation_tx_tag': 'Depreciation-Switch',
+    'depreciation_residual': \"D('50')\",
+  },
+]"
+; 可以用 Fava 官方的
+; plugin "beancount.plugins.unrealized" "Unrealized"
 
 * Fava
 1970-01-01 custom "fava-option" "journal-show-transaction" "pending cleared other"

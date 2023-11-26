@@ -55,7 +55,10 @@ class BCMDebit(Base):
             print("导入 {} price = {} balance = {} payee = {}".format(time, amount, balance, payee))
             # 忽略所有天天基金
             if '上海天天基金销售有限公司 基金购买' in desc:
-                print("忽略天天基金")
+                print("忽略天天基金购买")
+                continue
+            if '上海天天基金销售有限公司' in desc and '代销赎回' in desc:
+                print("忽略天天基金赎回")
                 continue
             # 元数据
             meta = {

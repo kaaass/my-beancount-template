@@ -9,9 +9,10 @@ import dateparser
 from beancount.core import data
 from beancount.core.data import Note, Transaction
 
+from .private_rules import wechat_rules
 from ..accounts import accounts
 from . import (DictReaderStrip, get_account_by_guess,
-               get_income_account_by_guess, replace_flag)
+               get_income_account_by_guess, replace_flag, get_account_by_name)
 from .base import Base
 from .deduplicate import Deduplicate
 
@@ -33,8 +34,8 @@ class WeChat(Base):
                 byte_content = z.read(filelist[1])
         content = byte_content.decode("utf-8-sig")
         lines = content.split("\n")
-        if (lines[0].replace(',', '') != '微信支付账单明细\r'):
-            raise 'Not WeChat Trade Record!'
+        if ('微信支付账单明细' not in lines[0].replace(',', '')):
+            raise ValueError('Not WeChat Trade Record!')
 
         print('Import WeChat: ' + lines[2])
         content = "\n".join(lines[16:len(lines)])
@@ -81,7 +82,7 @@ class WeChat(Base):
 
             status = row['当前状态']
 
-            if status == '支付成功' or status == '朋友已收钱' or status == '已全额退款' or '已退款' in status or status == '已转账' or status == '充值成功':
+            if status == '支付成功' or '已收钱' in status or status == '已全额退款' or '已退款' in status or status == '已转账' or status == '充值成功':
                 if '转入零钱通' in row['交易类型']:
                     entry = entry._replace(payee='')
                     entry = entry._replace(narration='转入零钱通')
@@ -96,13 +97,23 @@ class WeChat(Base):
                         account = get_account_by_guess(
                             row['交易对方'], row['商品'], time)
                     if account == "Expenses:Unknown":
-                    	entry = replace_flag(entry, '!')
-                    if status == '已全额退款' or '已退款' in status:
+                        entry = replace_flag(entry, '!')
+                    if (status == '已全额退款' or '已退款' in status) and row['收/支'] != '支出':
+                        amount_string = '-' + amount_string
+                    elif row['收/支'] == '收入':
                         amount_string = '-' + amount_string
                     data.create_simple_posting(
                         entry, account, amount_string, 'CNY')
+                # 支付方式
+                if row['支付方式'] != '/':
+                    pay_account = accounts[row['支付方式']]
+                else:
+                    if status == '充值成功':
+                        # 我也不知道对不对，但是现在充值成功账户是 /
+                        pay_account = Account余额
+                    pay_account = 'Assets:Unknown'
                 data.create_simple_posting(
-                    entry, accounts[row['支付方式']], None, None)
+                    entry, pay_account, None, None)
             elif row['当前状态'] == '已存入零钱' or row['当前状态'] == '已收钱':
                 if '微信红包' in row['交易类型']:
                     if entry.narration == '/':
@@ -116,11 +127,16 @@ class WeChat(Base):
                     data.create_simple_posting(entry, income, None, 'CNY')
                 data.create_simple_posting(
                     entry, Account余额, amount_string, 'CNY')
+            elif row['交易类型'] == '零钱充值':
+                data.create_simple_posting(entry, get_account_by_name(row['交易对方']), None, 'CNY')
+                data.create_simple_posting(
+                    entry, Account余额, amount_string, 'CNY')
             else:
                 print('Unknown row', row)
 
-            #b = printer.format_entry(entry)
-            # print(b)
+            # 运行特殊规则
+            entry = wechat_rules(entry)
+
             if not self.deduplicate.find_duplicate(entry, amount, 'wechat_trade_no'):
                 transactions.append(entry)
 

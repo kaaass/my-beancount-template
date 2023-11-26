@@ -1,18 +1,17 @@
-import requests
-import time
 import json
-from datetime import datetime, tzinfo, timedelta
+from datetime import tzinfo, timedelta
 from string import Template
 
-from bs4 import BeautifulSoup
-
+import dateparser
+import requests
 from beancount.core.number import D
 from beancount.prices import source
-from beancount.utils.date_utils import parse_date_liberally
 
 ZERO = timedelta(0)
 BASE_URL_TEMPLATE = Template(
-    "https://web-api.coinmarketcap.com/v1/cryptocurrency/ohlcv/historical?convert=$currency&slug=$ticker&time_end=$date_end&time_start=$date_start")
+    "https://web-api.coinmarketcap.com/v1/cryptocurrency/ohlcv/historical?convert=$currency&slug=$ticker")
+TIME_PARAM_TEMPLATE = Template(
+    "&time_end=$date_end&time_start=$date_start")
 CURRENCY = "USD"
 
 
@@ -39,22 +38,26 @@ class Source(source.Source):
         paramater = ticker.split("--")
         currency = paramater[1].upper()
 
-        if date == None:
-            date = datetime.today().replace(hour=0, minute=0, second=0) + timedelta(days=-1)
-        end_date = date + timedelta(days=1)
-
         url = BASE_URL_TEMPLATE.substitute(
-            date_start=int(date.timestamp()),
-            date_end=int(end_date.timestamp()),
             ticker=paramater[0],
             currency=currency)
 
+        if date is not None:
+            date = date.replace(hour=0, minute=0, second=0)
+            end_date = date + timedelta(days=1, hours=1)
+
+            url += TIME_PARAM_TEMPLATE.substitute(
+                date_start=int(date.timestamp()),
+                date_end=int(end_date.timestamp()))
+
+        content = None
         try:
             content = requests.get(url).content
             ret = json.loads(content)
-            quote = ret['data']['quotes'][0]['quote'][currency]
+            quote = ret['data']['quotes'][-1]['quote'][currency]
             price = D(quote['close'])
-            return source.SourcePrice(price, date, CURRENCY)
+            quote_time = dateparser.parse(ret['data']['quotes'][-1]['time_open'])
+            return source.SourcePrice(price, quote_time, CURRENCY)
 
         except:
             raise CoinmarketcapError(

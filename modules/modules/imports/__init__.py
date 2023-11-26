@@ -5,7 +5,7 @@ import csv
 
 
 def replace_flag(entry, flag):
-    return entry._replace(flag='!')
+    return entry._replace(flag=flag)
 
 
 def get_account_by_guess(from_user, description, time=None):

@@ -6,6 +6,7 @@ from beancount.parser import printer
 from modules.imports.alipay import Alipay
 from modules.imports.alipay_prove import AlipayProve
 from modules.imports.bcm_debit import BCMDebit
+from modules.imports.boc_debit import BOCDebit
 from modules.imports.citic_credit import CITICCredit
 from modules.imports.cmb_credit import CMBCredit
 from modules.imports.cmbc_credit import CMBCCredit
@@ -14,7 +15,9 @@ from modules.imports.icbc_credit import ICBCCredit
 from modules.imports.icbc_debit import ICBCDebit
 from modules.imports.ttjj import Ttjj
 from modules.imports.wechat import WeChat
+from modules.imports.wise import Wise
 from modules.imports.yuebao import YuEBao
+from modules.imports.fudan_ecard import Fudan
 
 parser = argparse.ArgumentParser("import")
 parser.add_argument("path", help="CSV Path")
@@ -26,7 +29,8 @@ args = parser.parse_args()
 entries, errors, option_map = loader.load_file(args.entry)
 
 importers = [Alipay, AlipayProve, WeChat, Dfcf, Ttjj, CITICCredit, CMBCCredit,
-             CMBCredit, YuEBao, ICBCCredit, ICBCDebit, BCMDebit]
+             CMBCredit, YuEBao, ICBCCredit, ICBCDebit, BCMDebit, Fudan, BOCDebit,
+             Wise]
 instance = None
 for importer in importers:
     try:
